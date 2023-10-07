@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,16 +19,20 @@ import (
 	ort "github.com/yalue/onnxruntime_go"
 )
 
-func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
-	outputA = make([]int64, len(inputA))
-	outputB = make([]int64, len(inputB))
-	outputC = make([]int64, len(inputC))
-	for i := range inputA {
-		outputA[i] = int64(inputA[i])
-		outputB[i] = int64(inputB[i])
-		outputC[i] = int64(inputC[i])
+func normalize(v []float32) []float32 {
+	norm := float32(0.0)
+	for _, val := range v {
+		norm += val * val
 	}
-	return
+	norm = float32(math.Sqrt(float64(norm)))
+	epsilon := float32(1e-12)
+
+	normalized := make([]float32, len(v))
+	for i, val := range v {
+		normalized[i] = (val / norm) + epsilon
+	}
+
+	return normalized
 }
 
 // Enum-type representing the available embedding models
@@ -44,21 +49,22 @@ type FlagEmbedding struct {
 	tokenizer *tokenizer.Tokenizer
 	model     EmbeddingModel
 	maxLength int
+	modelPath string
 }
 
+// NOTE:
+// We use a pointer for "ShowDownloadProgress" so that we can distinguish between the user
+// not setting this flag and the user setting it to false.
+// As Go assigns a default(empty) value of "false" to bools, we can't distinguish
+// if the user set it to false or not set at all.
+// A pointer to bool will be nil if not set explicitly
 type InitOptions struct {
-	Model              EmbeddingModel
-	ExecutionProviders []string
-	MaxLength          int
-	CacheDir           string
-	// Whether to show download progress when downloading the model
-	// NOTE:
-	// We use a pointer here so that we can distinguish between the user
-	// not setting this flag and the user setting it to false.
-	// As Go assigns a default(empty) value of "false" to bools, we can't distinguish
-	// if the user set it to false or not set at all.
-	// A pointer to bool will be nil if not set explicitly
+	Model                EmbeddingModel
+	ExecutionProviders   []string
+	MaxLength            int
+	CacheDir             string
 	ShowDownloadProgress *bool
+	OnnxPath             string
 }
 
 func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
@@ -79,7 +85,9 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 		options.ShowDownloadProgress = &showDownloadProgress
 	}
 
-	ort.SetSharedLibraryPath("/opt/homebrew/Cellar/onnxruntime/1.16.0/lib/libonnxruntime.1.16.0.dylib")
+	if options.OnnxPath != "" {
+		ort.SetSharedLibraryPath(options.OnnxPath)
+	}
 	err := ort.InitializeEnvironment()
 	if err != nil {
 		return nil, err
@@ -118,6 +126,7 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 		tokenizer: tknzer,
 		model:     options.Model,
 		maxLength: maxLen,
+		modelPath: modelPath,
 	}, nil
 
 }
@@ -134,6 +143,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 		sequence := tokenizer.NewInputSequence(v)
 		inputs[index] = tokenizer.NewSingleEncodeInput(sequence)
 	}
+
 	encodings, err := f.tokenizer.EncodeBatch(inputs, true)
 	if err != nil {
 		return nil, err
@@ -176,7 +186,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	}
 	defer outputTensor.Destroy()
 
-	session, err := ort.NewAdvancedSession("/Users/anush/Desktop/fastembed-go/local_cache/fast-bge-small-en/model_optimized.onnx", []string{
+	session, err := ort.NewAdvancedSession(filepath.Join(f.modelPath, "model_optimized.onnx"), []string{
 		"input_ids", "attention_mask", "token_type_ids",
 	}, []string{
 		"last_hidden_state",
@@ -199,6 +209,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	return getEmbeddings(outputTensor.GetData(), outputTensor.GetShape()), nil
 }
 
+// Private function to return the normalized embeddings from a flattened array with the given dimensions
 func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 	x, y, z := dimensions[0], dimensions[1], dimensions[2]
 	embeddings := make([][]float32, x)
@@ -206,9 +217,21 @@ func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 	for i = 0; i < x; i++ {
 		startIndex := i * y * z
 		endIndex := startIndex + z
-		embeddings[i] = data[startIndex:endIndex]
+		embeddings[i] = normalize(data[startIndex:endIndex])
 	}
 	return embeddings
+}
+
+func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
+	outputA = make([]int64, len(inputA))
+	outputB = make([]int64, len(inputB))
+	outputC = make([]int64, len(inputC))
+	for i := range inputA {
+		outputA[i] = int64(inputA[i])
+		outputB[i] = int64(inputB[i])
+		outputC[i] = int64(inputC[i])
+	}
+	return
 }
 
 func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), error) {
