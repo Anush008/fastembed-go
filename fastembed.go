@@ -272,6 +272,23 @@ func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), err
 	return embeddings, nil
 }
 
+func (f *FlagEmbedding) QueryEmbed(input string) ([]float32, error) {
+	query := "query: " + input
+	data, err := f.onnxEmbed([]string{query})
+	if err != nil {
+		return nil, err
+	}
+	return data[0], nil
+}
+
+func (f *FlagEmbedding) PassageEmbed(input []string, batchSize int) ([]([]float32), error) {
+	processedInput := make([]string, len(input))
+	for i, v := range input {
+		processedInput[i] = "passage: " + v
+	}
+	return f.Embed(processedInput, batchSize)
+}
+
 func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
 	if _, err := os.Stat(filepath.Join(cacheDir, string(model))); !errors.Is(err, fs.ErrNotExist) {
 		return filepath.Join(cacheDir, string(model)), nil
