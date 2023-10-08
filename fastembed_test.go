@@ -96,3 +96,50 @@ func TestEncodingToInt32(t *testing.T) {
 		t.Errorf("Expected %v, got %v", expectedC, outputC)
 	}
 }
+
+// // Define the canonical vector values as a map
+// var canonicalVectorValues = map[string][]float64{
+// 	"BAAI/bge-small-en":                      {-0.0232, -0.0255, 0.0174, -0.0639, -0.0006},
+// 	"BAAI/bge-base-en":                       {0.0115, 0.0372, 0.0295, 0.0121, 0.0346},
+// 	"sentence-transformers/all-MiniLM-L6-v2": {0.0259, 0.0058, 0.0114, 0.0380, -0.0233},
+// 	"intfloat/multilingual-e5-large":         {0.0098, 0.0045, 0.0066, -0.0354, 0.0070},
+// }
+
+// // Define the test for default embedding
+// func TestDefaultEmbedding(t *testing.T) {
+// 	for _, modelDesc := range Embedding.ListSupportedModels() {
+// 		dim := modelDesc["dim"]
+// 		model := DefaultEmbedding(modelDesc["model"])
+
+// 		docs := []string{"hello world", "flag embedding"}
+// 		embeddings := model.Embed(docs)
+// 		if len(embeddings) != 2 || len(embeddings[0]) != dim {
+// 			t.Errorf("Expected embeddings shape (2, %v), got (%v, %v)", dim, len(embeddings), len(embeddings[0]))
+// 		}
+
+// 		canonicalVector := canonicalVectorValues[modelDesc["model"]]
+// 		for i, val := range embeddings[0][:len(canonicalVector)] {
+// 			if math.Abs(val-canonicalVector[i]) > 1e-3 {
+// 				t.Errorf("Expected %v, got %v", canonicalVector[i], val)
+// 			}
+// 		}
+// 	}
+// }
+
+// // Define the test for batch embedding
+// func TestBatchEmbedding(t *testing.T) {
+// 	model := DefaultEmbedding()
+
+// 	docs := make([]string, 200)
+// 	for i := range docs {
+// 		if i%2 == 0 {
+// 			docs[i] = "hello world"
+// 		} else {
+// 			docs[i] = "flag embedding"
+// 		}
+// 	}
+// 	embeddings := model.Embed(docs, 10)
+// 	if len(embeddings) != 200 || len(embeddings[0]) != 384 {
+// 		t.Errorf("Expected embeddings shape (200, 384), got (%v, %v)", len(embeddings), len(embeddings[0]))
+// 	}
+// }

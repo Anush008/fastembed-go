@@ -29,6 +29,7 @@ const (
 	// MLE5Large     EmbeddingModel = "intfloat-multilingual-e5-large"
 )
 
+// Struct to interface with a FastEmbed model
 type FlagEmbedding struct {
 	tokenizer *tokenizer.Tokenizer
 	model     EmbeddingModel
@@ -36,6 +37,12 @@ type FlagEmbedding struct {
 	modelPath string
 }
 
+// Options to initialize the embedding model
+// Model: The model to use for embedding
+// ExecutionProviders: The execution providers to use for onnxruntime
+// MaxLength: The maximum length of the input sequence
+// CacheDir: The directory to cache the model files
+// ShowDownloadProgress: Whether to show the download progress bar
 // NOTE:
 // We use a pointer for "ShowDownloadProgress" so that we can distinguish between the user
 // not setting this flag and the user setting it to false.
@@ -51,6 +58,14 @@ type InitOptions struct {
 	OnnxPath             string
 }
 
+// Struct to represent FastEmbed model information
+type ModelInfo struct {
+	Model       EmbeddingModel
+	Dim         int
+	Description string
+}
+
+// Function to initialize a FastEmbed model
 func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 	if options.CacheDir == "" {
 		options.CacheDir = "local_cache"
@@ -118,11 +133,12 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 
 }
 
-// Call this function to cleanup the internal onnxruntime environment when it is no longer needed.
+// Function to cleanup the internal onnxruntime environment when it is no longer needed.
 func (f *FlagEmbedding) Destroy() {
 	ort.DestroyEnvironment()
 }
 
+// Private function to embed a batch of input strings
 func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 
 	inputs := make([]tokenizer.EncodeInput, len(input))
@@ -196,6 +212,11 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	return getEmbeddings(outputTensor.GetData(), outputTensor.GetShape()), nil
 }
 
+// Function to embed a batch of input strings
+// The batchSize parameter controls the number of inputs to embed in a single batch
+// The batches are processed in parallel
+// Returns the first error encountered if any
+// Default batch size is 512
 func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), error) {
 	if batchSize <= 0 {
 		batchSize = 512
@@ -234,6 +255,8 @@ func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), err
 	return embeddings, nil
 }
 
+// Function to embed a single input string prefixed with "query: "
+// Recommended for generating query embeddings for semantic search
 func (f *FlagEmbedding) QueryEmbed(input string) ([]float32, error) {
 	query := "query: " + input
 	data, err := f.onnxEmbed([]string{query})
@@ -243,12 +266,34 @@ func (f *FlagEmbedding) QueryEmbed(input string) ([]float32, error) {
 	return data[0], nil
 }
 
+// Function to embed string prefixed with "passage: "
 func (f *FlagEmbedding) PassageEmbed(input []string, batchSize int) ([]([]float32), error) {
 	processedInput := make([]string, len(input))
 	for i, v := range input {
 		processedInput[i] = "passage: " + v
 	}
 	return f.Embed(processedInput, batchSize)
+}
+
+// Function to list the supported models
+func (f *FlagEmbedding) ListSupportedModels() []ModelInfo {
+	return []ModelInfo{
+		{
+			Model:       AllMiniLML6V2,
+			Dim:         384,
+			Description: "Sentence Transformer model, MiniLM-L6-v2",
+		},
+		{
+			Model:       BGEBaseEN,
+			Dim:         768,
+			Description: "Base English model",
+		},
+		{
+			Model:       BGESmallEN,
+			Dim:         384,
+			Description: "Fast and Default English model",
+		},
+	}
 }
 
 func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
