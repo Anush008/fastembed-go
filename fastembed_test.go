@@ -47,31 +47,30 @@ func TestEmbedAllMiniLML6V2(t *testing.T) {
 	}
 }
 
-//
 // Breaks on GH Actions
 // --- FAIL: TestEmbedBGESmallEN (2.29s)
-//     fastembed_test.go:63: Expected no error, got The tensor's shape ([1 512]) requires 512 elements, but only 8 were provided
 //
-// func TestEmbedBGESmallEN(t *testing.T) {
-// 	// Test with a single input
-// 	fe, err := NewFlagEmbedding(&InitOptions{
-// 		Model: BGESmallEN,
-// 	})
-// 	defer fe.Destroy()
-// 	if err != nil {
-// 		t.Fatalf("Expected no error, got %v", err)
-// 	}
-// 	input := []string{"Is the world doing okay?"}
-// 	result, err := fe.Embed(input, 1)
-// 	if err != nil {
-// 		t.Fatalf("Expected no error, got %v", err)
-// 	}
+//	fastembed_test.go:63: Expected no error, got The tensor's shape ([1 512]) requires 512 elements, but only 8 were provided
+func TestEmbedBGESmallEN(t *testing.T) {
+	// Test with a single input
+	fe, err := NewFlagEmbedding(&InitOptions{
+		Model: BGESmallEN,
+	})
+	defer fe.Destroy()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	input := []string{"Is the world doing okay?"}
+	result, err := fe.Embed(input, 1)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
 
-// 	fmt.Printf("result: %v\n", result[0][0:10])
-// 	if len(result) != len(input) {
-// 		t.Errorf("Expected result length %v, got %v", len(input), len(result))
-// 	}
-// }
+	fmt.Printf("result: %v\n", result[0][0:10])
+	if len(result) != len(input) {
+		t.Errorf("Expected result length %v, got %v", len(input), len(result))
+	}
+}
 
 // A model type "Unigram" is not yet supported by the tokenizer
 // Ref: https://github.com/sugarme/tokenizer/blob/448e79b1ed65947b8c6343bf9aa39e78364f45c8/pretrained/model.go#L152
