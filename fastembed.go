@@ -181,7 +181,15 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	}
 	defer inputTensorType.Destroy()
 
-	outputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength), 384)
+	var dim int
+	for _, model := range f.ListSupportedModels() {
+		if model.Model == f.model {
+			dim = model.Dim
+			break
+		}
+	}
+
+	outputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength), int64(dim))
 	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
 	if err != nil {
 		return nil, err
