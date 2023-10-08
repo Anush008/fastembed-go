@@ -1,6 +1,6 @@
 module github.com/anush008/fastembed-go
 
-go 1.21.1
+go 1.21
 
 require (
 	github.com/schollz/progressbar/v3 v3.13.1
