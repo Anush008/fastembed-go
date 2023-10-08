@@ -3,6 +3,7 @@ package fastembed
 import (
 	"archive/tar"
 	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -176,6 +177,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	}
 	defer outputTensor.Destroy()
 
+	// Skip token_type_ids for intfloat-multilingual-e5-large when available
 	session, err := ort.NewAdvancedSession(filepath.Join(f.modelPath, "model_optimized.onnx"), []string{
 		"input_ids", "attention_mask", "token_type_ids",
 	}, []string{
@@ -296,24 +298,86 @@ func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error
 		return nil, err
 	}
 
-	maxLen := maxLength
+	configData, err := os.ReadFile(filepath.Join(modelPath, "config.json"))
+	if err != nil {
+		return nil, err
+	}
 
+	var config map[string]interface{}
+	err = json.Unmarshal(configData, &config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tokenizerConfigData, err := os.ReadFile(filepath.Join(modelPath, "tokenizer_config.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	var tokenizerConfig map[string]interface{}
+	err = json.Unmarshal(tokenizerConfigData, &tokenizerConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tokensMapData, err := os.ReadFile(filepath.Join(modelPath, "special_tokens_map.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	var tokensMap map[string]interface{}
+	err = json.Unmarshal(tokensMapData, &tokensMap)
+
+	if err != nil {
+		return nil, err
+	}
+
+	maxLength = min(maxLength, int(tokenizerConfig["model_max_length"].(float64)))
 	tknzer.WithTruncation(&tokenizer.TruncationParams{
-		MaxLength: maxLen,
+		MaxLength: maxLength,
 		Strategy:  tokenizer.LongestFirst,
 		Stride:    0,
 	})
 
-	padToken := "[PAD]"
-	paddingStrategy := tokenizer.NewPaddingStrategy(tokenizer.WithFixed(maxLen))
+	paddingStrategy := tokenizer.NewPaddingStrategy(tokenizer.WithFixed(maxLength))
 
 	paddingParams := tokenizer.PaddingParams{
 		Strategy:  *paddingStrategy,
 		Direction: tokenizer.Right,
-		PadId:     0,
-		PadToken:  padToken,
+		PadId:     int(config["pad_token_id"].(float64)),
+		PadToken:  tokenizerConfig["pad_token"].(string),
 	}
 	tknzer.WithPadding(&paddingParams)
+
+	specialTokens := make([]tokenizer.AddedToken, 0)
+
+	for _, v := range tokensMap {
+
+		switch t := v.(type) {
+		case map[string]interface{}:
+			{
+				specialToken := tokenizer.AddedToken{
+					Content:    t["content"].(string),
+					SingleWord: t["single_word"].(bool),
+					LStrip:     t["lstrip"].(bool),
+					RStrip:     t["rstrip"].(bool),
+					Normalized: t["normalized"].(bool),
+				}
+				specialTokens = append(specialTokens, specialToken)
+			}
+		case string:
+			specialToken := tokenizer.AddedToken{
+				Content: t,
+			}
+			specialTokens = append(specialTokens, specialToken)
+		default:
+			panic(fmt.Sprintf("unknown type for special_tokens_map.json%T", t))
+		}
+
+	}
+	tknzer.AddSpecialTokens(specialTokens)
 
 	return tknzer, nil
 }
