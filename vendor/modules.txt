@@ -1,0 +1,56 @@
+# github.com/emirpasic/gods v1.18.1
+## explicit; go 1.2
+github.com/emirpasic/gods/containers
+github.com/emirpasic/gods/lists
+github.com/emirpasic/gods/lists/arraylist
+github.com/emirpasic/gods/trees
+github.com/emirpasic/gods/trees/binaryheap
+github.com/emirpasic/gods/utils
+# github.com/mattn/go-runewidth v0.0.15
+## explicit; go 1.9
+github.com/mattn/go-runewidth
+# github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
+## explicit
+github.com/mitchellh/colorstring
+# github.com/rivo/uniseg v0.4.4
+## explicit; go 1.18
+github.com/rivo/uniseg
+# github.com/schollz/progressbar/v2 v2.15.0
+## explicit; go 1.13
+github.com/schollz/progressbar/v2
+# github.com/schollz/progressbar/v3 v3.13.1
+## explicit; go 1.13
+github.com/schollz/progressbar/v3
+# github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c
+## explicit; go 1.14
+github.com/sugarme/regexpset
+# github.com/sugarme/tokenizer v0.2.3-0.20230829214935-448e79b1ed65
+## explicit; go 1.18
+github.com/sugarme/tokenizer
+github.com/sugarme/tokenizer/decoder
+github.com/sugarme/tokenizer/model
+github.com/sugarme/tokenizer/model/bpe
+github.com/sugarme/tokenizer/model/wordlevel
+github.com/sugarme/tokenizer/model/wordpiece
+github.com/sugarme/tokenizer/normalizer
+github.com/sugarme/tokenizer/pretokenizer
+github.com/sugarme/tokenizer/pretrained
+github.com/sugarme/tokenizer/processor
+github.com/sugarme/tokenizer/spm
+github.com/sugarme/tokenizer/util
+github.com/sugarme/tokenizer/util/slice
+# github.com/yalue/onnxruntime_go v1.3.0
+## explicit; go 1.19
+github.com/yalue/onnxruntime_go
+# golang.org/x/sys v0.13.0
+## explicit; go 1.17
+golang.org/x/sys/plan9
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/term v0.13.0
+## explicit; go 1.17
+golang.org/x/term
+# golang.org/x/text v0.13.0
+## explicit; go 1.17
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
