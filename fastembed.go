@@ -37,7 +37,7 @@ type FlagEmbedding struct {
 	modelPath string
 }
 
-// Options to initialize the embedding model
+// Options to initialize a FastEmbed model
 // Model: The model to use for embedding
 // ExecutionProviders: The execution providers to use for onnxruntime
 // MaxLength: The maximum length of the input sequence
@@ -404,6 +404,9 @@ func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 }
 
 func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
+	if len(inputA) != len(inputB) || len(inputB) != len(inputC) {
+		panic("input lengths do not match")
+	}
 	outputA = make([]int64, len(inputA))
 	outputB = make([]int64, len(inputB))
 	outputC = make([]int64, len(inputC))
