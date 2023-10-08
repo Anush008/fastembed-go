@@ -19,22 +19,6 @@ import (
 	ort "github.com/yalue/onnxruntime_go"
 )
 
-func normalize(v []float32) []float32 {
-	norm := float32(0.0)
-	for _, val := range v {
-		norm += val * val
-	}
-	norm = float32(math.Sqrt(float64(norm)))
-	epsilon := float32(1e-12)
-
-	normalized := make([]float32, len(v))
-	for i, val := range v {
-		normalized[i] = (val / norm) + epsilon
-	}
-
-	return normalized
-}
-
 // Enum-type representing the available embedding models
 type EmbeddingModel string
 
@@ -88,9 +72,12 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 	if options.OnnxPath != "" {
 		ort.SetSharedLibraryPath(options.OnnxPath)
 	}
-	err := ort.InitializeEnvironment()
-	if err != nil {
-		return nil, err
+
+	if !ort.IsInitialized() {
+		err := ort.InitializeEnvironment()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	modelPath, err := retrieveModel(options.Model, options.CacheDir, *options.ShowDownloadProgress)
@@ -209,31 +196,6 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	return getEmbeddings(outputTensor.GetData(), outputTensor.GetShape()), nil
 }
 
-// Private function to return the normalized embeddings from a flattened array with the given dimensions
-func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
-	x, y, z := dimensions[0], dimensions[1], dimensions[2]
-	embeddings := make([][]float32, x)
-	var i int64
-	for i = 0; i < x; i++ {
-		startIndex := i * y * z
-		endIndex := startIndex + z
-		embeddings[i] = normalize(data[startIndex:endIndex])
-	}
-	return embeddings
-}
-
-func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
-	outputA = make([]int64, len(inputA))
-	outputB = make([]int64, len(inputB))
-	outputC = make([]int64, len(inputC))
-	for i := range inputA {
-		outputA[i] = int64(inputA[i])
-		outputB[i] = int64(inputB[i])
-		outputC[i] = int64(inputC[i])
-	}
-	return
-}
-
 func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), error) {
 	if batchSize <= 0 {
 		batchSize = 512
@@ -315,9 +277,9 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 			"Downloading "+string(model),
 		)
 		reader := progressbar.NewReader(response.Body, bar)
-		err = Untar(&reader, cacheDir)
+		err = untar(&reader, cacheDir)
 	} else {
-		err = Untar(response.Body, cacheDir)
+		err = untar(response.Body, cacheDir)
 	}
 
 	if err != nil {
@@ -326,7 +288,7 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 	return filepath.Join(cacheDir, string(model)), nil
 }
 
-func Untar(tarball io.Reader, target string) error {
+func untar(tarball io.Reader, target string) error {
 	archive, err := gzip.NewReader(tarball)
 	if err != nil {
 		return err
@@ -366,4 +328,45 @@ func Untar(tarball io.Reader, target string) error {
 		}
 	}
 	return nil
+}
+
+func normalize(v []float32) []float32 {
+	norm := float32(0.0)
+	for _, val := range v {
+		norm += val * val
+	}
+	norm = float32(math.Sqrt(float64(norm)))
+	epsilon := float32(1e-12)
+
+	normalized := make([]float32, len(v))
+	for i, val := range v {
+		normalized[i] = (val / norm) + epsilon
+	}
+
+	return normalized
+}
+
+// Private function to return the normalized embeddings from a flattened array with the given dimensions
+func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
+	x, y, z := dimensions[0], dimensions[1], dimensions[2]
+	embeddings := make([][]float32, x)
+	var i int64
+	for i = 0; i < x; i++ {
+		startIndex := i * y * z
+		endIndex := startIndex + z
+		embeddings[i] = normalize(data[startIndex:endIndex])
+	}
+	return embeddings
+}
+
+func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
+	outputA = make([]int64, len(inputA))
+	outputB = make([]int64, len(inputB))
+	outputC = make([]int64, len(inputC))
+	for i := range inputA {
+		outputA[i] = int64(inputA[i])
+		outputB[i] = int64(inputB[i])
+		outputC[i] = int64(inputC[i])
+	}
+	return
 }
