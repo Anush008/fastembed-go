@@ -26,7 +26,10 @@ const (
 	AllMiniLML6V2 EmbeddingModel = "fast-all-MiniLM-L6-v2"
 	BGEBaseEN     EmbeddingModel = "fast-bge-base-en"
 	BGESmallEN    EmbeddingModel = "fast-bge-small-en"
-	// MLE5Large     EmbeddingModel = "intfloat-multilingual-e5-large"
+
+// A model type "Unigram" is not yet supported by the tokenizer
+// Ref: https://github.com/sugarme/tokenizer/blob/448e79b1ed65947b8c6343bf9aa39e78364f45c8/pretrained/model.go#L152
+// MLE5Large     EmbeddingModel = "fast-multilingual-e5-large"
 )
 
 // Struct to interface with a FastEmbed model
@@ -297,6 +300,11 @@ func ListSupportedModels() []ModelInfo {
 			Dim:         384,
 			Description: "Fast and Default English model",
 		},
+		// {
+		// 	Model:       MLE5Large,
+		// 	Dim:         1024,
+		// 	Description: "Multilingual model, e5-large. Recommend using this model for non-English languages",
+		// },
 	}
 }
 
@@ -321,6 +329,14 @@ func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress b
 
 // Private function to download the model from Google Cloud Storage
 func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
+	// The MLE5Large model URL doesn't follow the same naming convention as the other models
+	// So, we tranform "fast-multilingual-e5-large" -> "intfloat-multilingual-e5-large" in the download URL
+	// The model directory name in the GCS storage is "fast-multilingual-e5-large", like the others
+	// modelName := model
+	// if model == MLE5Large {
+	// 	modelName = "intfloat" + model[strings.Index(string(model), "-"):]
+	// }
+
 	downloadURL := fmt.Sprintf("https://storage.googleapis.com/qdrant-fastembed/%s.tar.gz", model)
 
 	response, err := http.Get(downloadURL)
@@ -333,6 +349,7 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 		return "", fmt.Errorf("model download failed: %s", response.Status)
 	}
 
+	fmt.Println(response.ContentLength)
 	if showDownloadProgress {
 		bar := progressbar.DefaultBytes(
 			response.ContentLength,
@@ -341,12 +358,14 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 		reader := progressbar.NewReader(response.Body, bar)
 		err = untar(&reader, cacheDir)
 	} else {
+		fmt.Printf("Downloading %s...", model)
 		err = untar(response.Body, cacheDir)
 	}
 
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(cacheDir, string(model)), nil
 }
 
