@@ -27,6 +27,8 @@ github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c h1:pwb4kNSHb4K89
 github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c/go.mod h1:2gwkXLWbDGUQWeL3RtpCmcY4mzCtU13kb9UsAg9xMaw=
 github.com/sugarme/tokenizer v0.2.2 h1:7X9324fqWSWU2U0oQeN5wNH7CJuYdehOS9Io4f/Xkow=
 github.com/sugarme/tokenizer v0.2.2/go.mod h1:2MKkQ/K0zFUFO4inPZ8rQaz+sJVz62LhbQG83rcuITA=
+github.com/sugarme/tokenizer v0.2.3-0.20230829214935-448e79b1ed65 h1:pvTWMhJbXsmFwjLT2T1qz/p4csuFko4NcM3/BUF7Sj8=
+github.com/sugarme/tokenizer v0.2.3-0.20230829214935-448e79b1ed65/go.mod h1:2MKkQ/K0zFUFO4inPZ8rQaz+sJVz62LhbQG83rcuITA=
 github.com/yalue/onnxruntime_go v1.3.0 h1:f8Bch+AF6rRRyDdpN06s/ajpBMIXxDi/Ad6AHb0Mfk4=
 github.com/yalue/onnxruntime_go v1.3.0/go.mod h1:b4X26A8pekNb1ACJ58wAXgNKeUCGEAQ9dmACut9Sm/4=
 golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
