@@ -20,5 +20,10 @@ jobs:
           go-version: 1.21
       - name: Install dependencies
         run: go get .
+      - name: Install ONNX Runtime
+        run: |
+          wget https://github.com/microsoft/onnxruntime/releases/download/v1.8.1/onnxruntime-linux-x64-1.8.1.tgz
+          tar xvzf onnxruntime-linux-x64-1.8.1.tgz
+          echo "ONNX_PATH=$(pwd)/onnxruntime-linux-x64-1.8.1/lib/libonnxruntime.so" >> $GITHUB_ENV
       - name: Test with Go
         run: go test
