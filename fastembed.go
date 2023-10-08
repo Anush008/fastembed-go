@@ -335,14 +335,7 @@ func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error
 	}
 
 	modelMaxLen := tokenizerConfig["model_max_length"].(float64)
-	// Handle overflow on Linux
-	if modelMaxLen > math.MaxInt {
-		modelMaxLen = math.MaxInt
-	}
-
-	maxLength = min(maxLength, int(modelMaxLen))
-
-	fmt.Println("Model is", modelPath, "with max length", maxLength)
+	maxLength = min(maxLength, int(math.Abs(modelMaxLen)))
 
 	tknzer.WithTruncation(&tokenizer.TruncationParams{
 		MaxLength: maxLength,
