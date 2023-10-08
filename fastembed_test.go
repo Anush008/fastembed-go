@@ -2,17 +2,13 @@ package fastembed
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 )
 
 func TestNewFlagEmbedding(t *testing.T) {
 	// Test with default options
-	options := &InitOptions{
-		OnnxPath: os.Getenv("ONNX_PATH"),
-	}
-	_, err := NewFlagEmbedding(options)
+	_, err := NewFlagEmbedding(&InitOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -20,11 +16,7 @@ func TestNewFlagEmbedding(t *testing.T) {
 
 func TestEmbed(t *testing.T) {
 	// Test with a single input
-	options := &InitOptions{
-		OnnxPath: os.Getenv("ONNX_PATH"),
-		Model:    AllMiniLML6V2,
-	}
-	fe, err := NewFlagEmbedding(options)
+	fe, err := NewFlagEmbedding(&InitOptions{})
 	defer fe.Destroy()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -42,10 +34,7 @@ func TestEmbed(t *testing.T) {
 
 func TestQueryEmbed(t *testing.T) {
 	// Test with a single input
-	options := &InitOptions{
-		OnnxPath: os.Getenv("ONNX_PATH"),
-	}
-	fe, err := NewFlagEmbedding(options)
+	fe, err := NewFlagEmbedding(&InitOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -61,10 +50,7 @@ func TestQueryEmbed(t *testing.T) {
 
 func TestPassageEmbed(t *testing.T) {
 	// Test with a single input
-	options := &InitOptions{
-		OnnxPath: os.Getenv("ONNX_PATH"),
-	}
-	fe, err := NewFlagEmbedding(options)
+	fe, err := NewFlagEmbedding(&InitOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

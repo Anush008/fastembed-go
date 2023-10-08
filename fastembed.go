@@ -55,7 +55,6 @@ type InitOptions struct {
 	MaxLength            int
 	CacheDir             string
 	ShowDownloadProgress *bool
-	OnnxPath             string
 }
 
 // Struct to represent FastEmbed model information
@@ -84,8 +83,8 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 		options.ShowDownloadProgress = &showDownloadProgress
 	}
 
-	if options.OnnxPath != "" {
-		ort.SetSharedLibraryPath(options.OnnxPath)
+	if onnxPath := os.Getenv("ONNX_PATH"); onnxPath != "" {
+		ort.SetSharedLibraryPath(onnxPath)
 	}
 
 	if !ort.IsInitialized() {
