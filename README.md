@@ -4,7 +4,7 @@
     <img src="https://github.com/Anush008/fastembed-rs/assets/46051506/4bd3cefe-12da-48b9-8cc2-7489145c9cb5" style="display: inline-block; vertical-align: middle; width: auto; height: 100px;">
  </h1>
  <h3>Go implementation of <a href="https://github.com/qdrant/fastembed" target="_blank">@Qdrant/fastembed</a></h3>
-  <a href="https://pkg.go.dev/github.com/anush009/fastembed-go"><img src="https://pkg.go.dev/badge/github.com/anush009/fastembed-go.svg" alt="Go Reference"></a>
+  <a href="https://pkg.go.dev/github.com/anush008/fastembed-go"><img src="https://pkg.go.dev/badge/github.com/anush008/fastembed-go.svg" alt="Go Reference"></a>
   <a href="https://github.com/Anush008/fastembed-go/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-mit-blue.svg" alt="MIT Licensed"></a>
   <a href="https://github.com/Anush008/fastembed-go/actions/workflows/release.yml"><img src="https://github.com/Anush008/fastembed-go/actions/workflows/release.yml/badge.svg?branch=main" alt="Semantic release"></a>
 </div>
@@ -36,23 +36,6 @@ Run the following Go CLI command in your project directory:
 ```bash
 go get -u github.com/Anush008/fastembed-go
 ```
-
-## ℹ︎ Notice:
-
-The Onnx runtime path is automatically loaded on most environments. However, if you encounter
-```sh
-panic: Platform-specific initialization failed: Error loading ONNX shared library
-```
-Set the `ONNX_PATH` env to your Onnx installation.
-For eg, on MacOS:
-```sh
-export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.dylib"
-```
-On Linux:
-```sh
-export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.so"
-```
-You can find the Onnx runtime releases [here](https://github.com/microsoft/onnxruntime/releases).
 
 ## 📖 Usage
 
@@ -118,6 +101,23 @@ if err != nil {
  panic(err)
 }
 ```
+
+## ℹ︎ Notice:
+
+The Onnx runtime path is automatically loaded on most environments. However, if you encounter
+```sh
+panic: Platform-specific initialization failed: Error loading ONNX shared library
+```
+Set the `ONNX_PATH` env to your Onnx installation.
+For eg, on MacOS:
+```sh
+export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.dylib"
+```
+On Linux:
+```sh
+export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.so"
+```
+You can find the Onnx runtime releases [here](https://github.com/microsoft/onnxruntime/releases).
 
 ## 🚒 Under the hood
 
