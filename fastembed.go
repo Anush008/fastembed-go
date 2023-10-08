@@ -181,15 +181,12 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 	}
 	defer inputTensorType.Destroy()
 
-	var dim int
-	for _, model := range f.ListSupportedModels() {
-		if model.Model == f.model {
-			dim = model.Dim
-			break
-		}
+	modelInfo, err := getModelInfo(f.model)
+	if err != nil {
+		return nil, err
 	}
 
-	outputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength), int64(dim))
+	outputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength), int64(modelInfo.Dim))
 	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
 	if err != nil {
 		return nil, err
@@ -283,7 +280,7 @@ func (f *FlagEmbedding) PassageEmbed(input []string, batchSize int) ([]([]float3
 }
 
 // Function to list the supported models
-func (f *FlagEmbedding) ListSupportedModels() []ModelInfo {
+func ListSupportedModels() []ModelInfo {
 	return []ModelInfo{
 		{
 			Model:       AllMiniLML6V2,
@@ -303,6 +300,18 @@ func (f *FlagEmbedding) ListSupportedModels() []ModelInfo {
 	}
 }
 
+// Private function to get model information from the model name
+func getModelInfo(model EmbeddingModel) (ModelInfo, error) {
+	for _, m := range ListSupportedModels() {
+		if m.Model == model {
+			return m, nil
+		}
+	}
+	return ModelInfo{}, fmt.Errorf("model %s not found", model)
+}
+
+// Private function to retrieve the model from the cache or download it
+// Returns the path to the model
 func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
 	if _, err := os.Stat(filepath.Join(cacheDir, string(model))); !errors.Is(err, fs.ErrNotExist) {
 		return filepath.Join(cacheDir, string(model)), nil
@@ -310,6 +319,7 @@ func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress b
 	return downloadFromGcs(model, cacheDir, showDownloadProgress)
 }
 
+// Private function to download the model from Google Cloud Storage
 func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
 	downloadURL := fmt.Sprintf("https://storage.googleapis.com/qdrant-fastembed/%s.tar.gz", model)
 
@@ -340,6 +350,7 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 	return filepath.Join(cacheDir, string(model)), nil
 }
 
+// Private function to untar the downloaded model from a .tar.gz file
 func untar(tarball io.Reader, target string) error {
 	archive, err := gzip.NewReader(tarball)
 	if err != nil {
@@ -382,6 +393,8 @@ func untar(tarball io.Reader, target string) error {
 	return nil
 }
 
+// Private function to normalize a vector
+// Based on https://github.com/qdrant/fastembed/blob/ca6f9d629ad14da1dfd094c846976b0c964b32cf/fastembed/embedding.py#L16
 func normalize(v []float32) []float32 {
 	norm := float32(0.0)
 	for _, val := range v {
@@ -411,6 +424,8 @@ func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 	return embeddings
 }
 
+// Private function to convert multiple int32 slices to int64 slices as required by the onnxruntime API
+// With a linear time complexity
 func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
 	if len(inputA) != len(inputB) || len(inputB) != len(inputC) {
 		panic("input lengths do not match")
