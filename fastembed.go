@@ -70,6 +70,10 @@ type ModelInfo struct {
 
 // Function to initialize a FastEmbed model
 func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
+	if options == nil {
+		options = &InitOptions{}
+	}
+
 	if options.CacheDir == "" {
 		options.CacheDir = "local_cache"
 	}
@@ -290,7 +294,6 @@ func ListSupportedModels() []ModelInfo {
 	}
 }
 
-// TODO: Configure the from model config files
 func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error) {
 	tknzer, err := pretrained.FromFile(filepath.Join(modelPath, "tokenizer.json"))
 
