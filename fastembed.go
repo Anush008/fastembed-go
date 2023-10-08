@@ -205,10 +205,10 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 // The batchSize parameter controls the number of inputs to embed in a single batch
 // The batches are processed in parallel
 // Returns the first error encountered if any
-// Default batch size is 512
+// Default batch size is 256
 func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), error) {
 	if batchSize <= 0 {
-		batchSize = 512
+		batchSize = 256
 	}
 	embeddings := make([]([]float32), len(input))
 	var wg sync.WaitGroup
