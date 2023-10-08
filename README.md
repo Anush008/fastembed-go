@@ -47,6 +47,7 @@ model, err := fastembed.NewFlagEmbedding(nil)
 if err != nil {
  panic(err)
 }
+defer model.Destroy()
 
 // With custom options
 options := fastembed.InitOptions{
@@ -59,6 +60,7 @@ model, err = fastembed.NewFlagEmbedding(&options)
 if err != nil {
  panic(err)
 }
+defer model.Destroy()
 
 documents := []string{
  "passage: Hello, World!",
