@@ -7,8 +7,29 @@ on:
   workflow_dispatch:
   
 jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+      - name: Install dependencies
+        run: go get .
+      - name: Install ONNX Runtime
+        run: |
+          wget https://github.com/microsoft/onnxruntime/releases/download/v1.16.0/onnxruntime-linux-x64-1.16.0.tgz
+          tar xvzf onnxruntime-linux-x64-1.16.0.tgz
+          echo "ONNX_PATH=$(pwd)/onnxruntime-linux-x64-1.16.0/lib/libonnxruntime.so" >> $GITHUB_ENV
+      - name: Test with Go
+        run: go test
+
   release:
     runs-on: ubuntu-latest
+    needs: 
+      - test
     steps:
       - name: "☁️ checkout repository"
         uses: actions/checkout@v3
