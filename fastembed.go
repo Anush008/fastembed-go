@@ -26,7 +26,10 @@ type EmbeddingModel string
 const (
 	AllMiniLML6V2 EmbeddingModel = "fast-all-MiniLM-L6-v2"
 	BGEBaseEN     EmbeddingModel = "fast-bge-base-en"
+	BGEBaseENV15  EmbeddingModel = "fast-bge-base-en-v1.5"
 	BGESmallEN    EmbeddingModel = "fast-bge-small-en"
+	BGESmallENV15 EmbeddingModel = "fast-bge-small-en-v1.5"
+	BGESmallZH    EmbeddingModel = "fast-bge-small-zh-v1.5"
 
 // A model with type "Unigram" is not yet supported by the tokenizer
 // Ref: https://github.com/sugarme/tokenizer/blob/448e79b1ed65947b8c6343bf9aa39e78364f45c8/pretrained/model.go#L152
@@ -79,7 +82,7 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 	}
 
 	if options.Model == "" {
-		options.Model = BGESmallEN
+		options.Model = BGESmallENV15
 	}
 
 	if options.MaxLength == 0 {
@@ -282,9 +285,24 @@ func ListSupportedModels() []ModelInfo {
 			Description: "Base English model",
 		},
 		{
+			Model:       BGEBaseENV15,
+			Dim:         768,
+			Description: "v1.5 release of the base English model",
+		},
+		{
 			Model:       BGESmallEN,
 			Dim:         384,
-			Description: "Fast and Default English model",
+			Description: "Fast English model",
+		},
+		{
+			Model:       BGESmallENV15,
+			Dim:         384,
+			Description: "Fast, default English model",
+		},
+		{
+			Model:       BGESmallZH,
+			Dim:         512,
+			Description: "Fast Chinese model",
 		},
 		// {
 		// 	Model:       MLE5Large,
