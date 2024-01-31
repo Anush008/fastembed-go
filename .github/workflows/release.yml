@@ -49,6 +49,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: "🔧 setup Bun"
         uses: oven-sh/setup-bun@v1
 

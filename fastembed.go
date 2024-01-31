@@ -20,7 +20,7 @@ import (
 	ort "github.com/yalue/onnxruntime_go"
 )
 
-// Enum-type representing the available embedding models
+// Enum-type representing the available embedding models.
 type EmbeddingModel string
 
 const (
@@ -36,7 +36,7 @@ const (
 // MLE5Large     EmbeddingModel = "fast-multilingual-e5-large"
 )
 
-// Struct to interface with a FastEmbed model
+// Struct to interface with a FastEmbed model.
 type FlagEmbedding struct {
 	tokenizer *tokenizer.Tokenizer
 	model     EmbeddingModel
@@ -55,7 +55,7 @@ type FlagEmbedding struct {
 // not setting this flag and the user setting it to false. We want the default value to be true.
 // As Go assigns a default(empty) value of "false" to bools, we can't distinguish
 // if the user set it to false or not set at all.
-// A pointer to bool will be nil if not set explicitly
+// A pointer to bool will be nil if not set explicitly.
 type InitOptions struct {
 	Model                EmbeddingModel
 	ExecutionProviders   []string
@@ -64,14 +64,14 @@ type InitOptions struct {
 	ShowDownloadProgress *bool
 }
 
-// Struct to represent FastEmbed model information
+// Struct to represent FastEmbed model information.
 type ModelInfo struct {
 	Model       EmbeddingModel
 	Dim         int
 	Description string
 }
 
-// Function to initialize a FastEmbed model
+// Function to initialize a FastEmbed model.
 func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 	if options == nil {
 		options = &InitOptions{}
@@ -120,17 +120,15 @@ func NewFlagEmbedding(options *InitOptions) (*FlagEmbedding, error) {
 		maxLength: options.MaxLength,
 		modelPath: modelPath,
 	}, nil
-
 }
 
 // Function to cleanup the internal onnxruntime environment when it is no longer needed.
-func (f *FlagEmbedding) Destroy() {
-	ort.DestroyEnvironment()
+func (f *FlagEmbedding) Destroy() error {
+	return ort.DestroyEnvironment()
 }
 
-// Private function to embed a batch of input strings
+// Private function to embed a batch of input strings.
 func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
-
 	inputs := make([]tokenizer.EncodeInput, len(input))
 	for index, v := range input {
 		sequence := tokenizer.NewInputSequence(v)
@@ -150,7 +148,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 		inputTypeIdsFlat = append(inputTypeIdsFlat, inputTypeIds...)
 	}
 
-	inputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength))
+	inputShape := ort.NewShape(int64(len(inputs)), int64(encodings[0].Len()))
 
 	inputTensorID, err := ort.NewTensor(inputShape, inputIdsFlat)
 	if err != nil {
@@ -177,7 +175,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 		return nil, err
 	}
 
-	outputShape := ort.NewShape(int64(len(inputs)), int64(f.maxLength), int64(modelInfo.Dim))
+	outputShape := ort.NewShape(int64(len(inputs)), int64(int64(encodings[0].Len())), int64(modelInfo.Dim))
 	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
 	if err != nil {
 		return nil, err
@@ -212,7 +210,7 @@ func (f *FlagEmbedding) onnxEmbed(input []string) ([]([]float32), error) {
 // The batchSize parameter controls the number of inputs to embed in a single batch
 // The batches are processed in parallel
 // Returns the first error encountered if any
-// Default batch size is 256
+// Default batch size is 256.
 func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), error) {
 	if batchSize <= 0 {
 		batchSize = 256
@@ -220,7 +218,7 @@ func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), err
 	embeddings := make([]([]float32), len(input))
 	var wg sync.WaitGroup
 	errorCh := make(chan error, len(input))
-	//var resultsMutex sync.Mutex
+	// var resultsMutex sync.Mutex
 
 	for i := 0; i < len(input); i += batchSize {
 		wg.Add(1)
@@ -236,9 +234,8 @@ func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), err
 			}
 			// resultsMutex.Lock()
 			// defer resultsMutex.Unlock()
-			//Removed the mutex as the slice positions being accessed are unique for each goroutine and there is no overlap
+			// Removed the mutex as the slice positions being accessed are unique for each goroutine and there is no overlap
 			copy(embeddings[i:end], batchOut)
-
 		}(i)
 	}
 	wg.Wait()
@@ -252,7 +249,7 @@ func (f *FlagEmbedding) Embed(input []string, batchSize int) ([]([]float32), err
 }
 
 // Function to embed a single input string prefixed with "query: "
-// Recommended for generating query embeddings for semantic search
+// Recommended for generating query embeddings for semantic search.
 func (f *FlagEmbedding) QueryEmbed(input string) ([]float32, error) {
 	query := "query: " + input
 	data, err := f.onnxEmbed([]string{query})
@@ -262,7 +259,7 @@ func (f *FlagEmbedding) QueryEmbed(input string) ([]float32, error) {
 	return data[0], nil
 }
 
-// Function to embed string prefixed with "passage: "
+// Function to embed string prefixed with "passage: ".
 func (f *FlagEmbedding) PassageEmbed(input []string, batchSize int) ([]([]float32), error) {
 	processedInput := make([]string, len(input))
 	for i, v := range input {
@@ -271,7 +268,7 @@ func (f *FlagEmbedding) PassageEmbed(input []string, batchSize int) ([]([]float3
 	return f.Embed(processedInput, batchSize)
 }
 
-// Function to list the supported FastEmbed models
+// Function to list the supported FastEmbed models.
 func ListSupportedModels() []ModelInfo {
 	return []ModelInfo{
 		{
@@ -365,20 +362,19 @@ func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error
 		Stride:    0,
 	})
 
-	paddingStrategy := tokenizer.NewPaddingStrategy(tokenizer.WithFixed(maxLength))
-
 	paddingParams := tokenizer.PaddingParams{
-		Strategy:  *paddingStrategy,
+		// Strategy defaults to "BatchLongest"
+		Strategy:  *tokenizer.NewPaddingStrategy(),
 		Direction: tokenizer.Right,
 		PadId:     int(config["pad_token_id"].(float64)),
 		PadToken:  tokenizerConfig["pad_token"].(string),
+		PadTypeId: 0,
 	}
 	tknzer.WithPadding(&paddingParams)
 
 	specialTokens := make([]tokenizer.AddedToken, 0)
 
 	for _, v := range tokensMap {
-
 		switch t := v.(type) {
 		case map[string]interface{}:
 			{
@@ -399,14 +395,13 @@ func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error
 		default:
 			panic(fmt.Sprintf("unknown type for special_tokens_map.json%T", t))
 		}
-
 	}
 	tknzer.AddSpecialTokens(specialTokens)
 
 	return tknzer, nil
 }
 
-// Private function to get model information from the model name
+// Private function to get model information from the model name.
 func getModelInfo(model EmbeddingModel) (ModelInfo, error) {
 	for _, m := range ListSupportedModels() {
 		if m.Model == model {
@@ -417,7 +412,7 @@ func getModelInfo(model EmbeddingModel) (ModelInfo, error) {
 }
 
 // Private function to retrieve the model from the cache or download it
-// Returns the path to the model
+// Returns the path to the model.
 func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
 	if _, err := os.Stat(filepath.Join(cacheDir, string(model))); !errors.Is(err, fs.ErrNotExist) {
 		return filepath.Join(cacheDir, string(model)), nil
@@ -425,7 +420,7 @@ func retrieveModel(model EmbeddingModel, cacheDir string, showDownloadProgress b
 	return downloadFromGcs(model, cacheDir, showDownloadProgress)
 }
 
-// Private function to download the model from Google Cloud Storage
+// Private function to download the model from Google Cloud Storage.
 func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress bool) (string, error) {
 	// The MLE5Large model URL doesn't follow the same naming convention as the other models
 	// So, we tranform "fast-multilingual-e5-large" -> "intfloat-multilingual-e5-large" in the download URL
@@ -466,7 +461,7 @@ func downloadFromGcs(model EmbeddingModel, cacheDir string, showDownloadProgress
 	return filepath.Join(cacheDir, string(model)), nil
 }
 
-// Private function to untar the downloaded model from a .tar.gz file
+// Private function to untar the downloaded model from a .tar.gz file.
 func untar(tarball io.Reader, target string) error {
 	archive, err := gzip.NewReader(tarball)
 	if err != nil {
@@ -527,7 +522,7 @@ func normalize(v []float32) []float32 {
 	return normalized
 }
 
-// Private function to return the normalized embeddings from a flattened array with the given dimensions
+// Private function to return the normalized embeddings from a flattened array with the given dimensions.
 func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 	x, y, z := dimensions[0], dimensions[1], dimensions[2]
 	embeddings := make([][]float32, x)
@@ -541,18 +536,18 @@ func getEmbeddings(data []float32, dimensions []int64) []([]float32) {
 }
 
 // Private function to convert multiple int32 slices to int64 slices as required by the onnxruntime API
-// With a linear time complexity
-func encodingToInt32(inputA, inputB, inputC []int) (outputA, outputB, outputC []int64) {
+// With a linear time complexity.
+func encodingToInt32(inputA, inputB, inputC []int) ([]int64, []int64, []int64) {
 	if len(inputA) != len(inputB) || len(inputB) != len(inputC) {
 		panic("input lengths do not match")
 	}
-	outputA = make([]int64, len(inputA))
-	outputB = make([]int64, len(inputB))
-	outputC = make([]int64, len(inputC))
+	outputA := make([]int64, len(inputA))
+	outputB := make([]int64, len(inputB))
+	outputC := make([]int64, len(inputC))
 	for i := range inputA {
 		outputA[i] = int64(inputA[i])
 		outputB[i] = int64(inputB[i])
 		outputC[i] = int64(inputC[i])
 	}
-	return
+	return outputA, outputB, outputC
 }

@@ -4,6 +4,32 @@ static const OrtApi *ort_api = NULL;
 
 static AppendCoreMLProviderFn append_coreml_provider_fn = NULL;
 
+// The dml_provider_factory.h header for using DirectML is annoying to include
+// here for a couple reasons:
+//  - It contains C++
+//  - It includes d3d12.h and DirectML.h, both of which may be hard to set up
+//    under mingw
+// Fortunately, the basic AppendExecutionProvider_DML function from the
+// OrtDmlApi struct does not rely on any of these things, but we still need the
+// struct definition itself. Obviously, copying it here is not perfect, and
+// we'll need to keep an eye on it to make sure it doesn't change between
+// updates. Most importantly, we need to make sure that the one function we
+// care about remains at the same place in the struct.  Since it's first,
+// hopefully it's unlikely to change.
+typedef OrtStatus* (*AppendDirectMLProviderFn)(OrtSessionOptions*, int);
+typedef struct {
+  AppendDirectMLProviderFn SessionOptionsAppendExecutionProvider_DML;
+  // All of these functions pointers should be irrelevant (and they depend on
+  // other definitions from dml_provider_factory.h), but I'll copy them here
+  // regardless as plain void*s. GetExecutionProviderApi shouldn't write to
+  // this struct anyway, as it only provides a const pointer to it.
+  void *SessionOptionsAppendExecutionProvider_DML1;
+  void *CreateGPUAllocationFromD3DResource;
+  void *FreeGPUAllocation;
+  void *GetD3D12ResourceFromAllocation;
+  void *SessionOptionsAppendExecutionProvider_DML2;
+} DummyOrtDMLAPI;
+
 int SetAPIFromBase(OrtApiBase *api_base) {
   if (!api_base) return 1;
   ort_api = api_base->GetApi(ORT_API_VERSION);
@@ -65,6 +91,18 @@ OrtStatus *SetInterOpNumThreads(OrtSessionOptions *o, int n) {
   return ort_api->SetInterOpNumThreads(o, n);
 }
 
+OrtStatus *SetCpuMemArena(OrtSessionOptions *o, int use_arena){
+  if (use_arena)
+    return ort_api->EnableCpuMemArena(o);
+  return ort_api->DisableCpuMemArena(o);
+}
+
+OrtStatus *SetMemPattern(OrtSessionOptions *o, int use_mem_pattern){
+  if (use_mem_pattern)
+    return ort_api->EnableMemPattern(o);
+  return ort_api->DisableMemPattern(o);
+}
+
 OrtStatus *AppendExecutionProviderCUDAV2(OrtSessionOptions *o,
   OrtCUDAProviderOptionsV2 *cuda_options) {
   return ort_api->SessionOptionsAppendExecutionProvider_CUDA_V2(o,
@@ -112,6 +150,17 @@ OrtStatus *AppendExecutionProviderCoreML(OrtSessionOptions *o,
   return append_coreml_provider_fn(o, flags);
 }
 
+OrtStatus *AppendExecutionProviderDirectML(OrtSessionOptions *o,
+  int device_id) {
+  DummyOrtDMLAPI *dml_api = NULL;
+  OrtStatus *status = NULL;
+  status = ort_api->GetExecutionProviderApi("DML", ORT_API_VERSION,
+    (const void **) (&dml_api));
+  if (status) return status;
+  status = dml_api->SessionOptionsAppendExecutionProvider_DML(o, device_id);
+  return status;
+}
+
 OrtStatus *CreateSession(void *model_data, size_t model_data_length,
     OrtEnv *env, OrtSession **out, OrtSessionOptions *options) {
   OrtStatus *status = NULL;
@@ -145,6 +194,14 @@ void ReleaseOrtSession(OrtSession *session) {
   ort_api->ReleaseSession(session);
 }
 
+OrtStatus *SessionGetInputCount(OrtSession *session, size_t *result) {
+  return ort_api->SessionGetInputCount(session, result);
+}
+
+OrtStatus *SessionGetOutputCount(OrtSession *session, size_t *result) {
+  return ort_api->SessionGetOutputCount(session, result);
+}
+
 void ReleaseOrtValue(OrtValue *value) {
   ort_api->ReleaseValue(value);
 }
@@ -156,4 +213,72 @@ OrtStatus *CreateOrtTensorWithShape(void *data, size_t data_size,
   status = ort_api->CreateTensorWithDataAsOrtValue(mem_info, data, data_size,
     shape, shape_size, dtype, out);
   return status;
+}
+
+OrtStatus *GetTensorTypeAndShape(const OrtValue *value, OrtTensorTypeAndShapeInfo **out) {
+  return ort_api->GetTensorTypeAndShape(value, out);
+}
+
+OrtStatus *GetDimensionsCount(const OrtTensorTypeAndShapeInfo *info, size_t *out) {
+  return ort_api->GetDimensionsCount(info, out);
+}
+
+OrtStatus *GetDimensions(const OrtTensorTypeAndShapeInfo *info, int64_t *dim_values, size_t dim_values_length) {
+  return ort_api->GetDimensions(info, dim_values, dim_values_length);
+}
+
+OrtStatus *GetTensorElementType(const OrtTensorTypeAndShapeInfo *info, enum ONNXTensorElementDataType *out) {
+  return ort_api->GetTensorElementType(info, out);
+}
+
+void ReleaseTensorTypeAndShapeInfo(OrtTensorTypeAndShapeInfo *input) {
+  ort_api->ReleaseTensorTypeAndShapeInfo(input);
+}
+
+OrtStatus *GetTensorMutableData(OrtValue *value, void **out) {
+  return ort_api->GetTensorMutableData(value, out);
+}
+
+OrtStatus *SessionGetInputName(OrtSession *session, size_t i, char **name) {
+  OrtAllocator *allocator = NULL;
+  OrtStatus *status = NULL;
+  status = ort_api->GetAllocatorWithDefaultOptions(&allocator);
+  if (status) return status;
+  return ort_api->SessionGetInputName(session, i, allocator, name);
+}
+
+OrtStatus *SessionGetOutputName(OrtSession *session, size_t i, char **name) {
+  OrtAllocator *allocator = NULL;
+  OrtStatus *status = NULL;
+  status = ort_api->GetAllocatorWithDefaultOptions(&allocator);
+  if (status) return status;
+  return ort_api->SessionGetOutputName(session, i, allocator, name);
+}
+
+OrtStatus *FreeWithDefaultORTAllocator(void *to_free) {
+  OrtAllocator *allocator = NULL;
+  OrtStatus *status = NULL;
+  status = ort_api->GetAllocatorWithDefaultOptions(&allocator);
+  if (status) return status;
+  return ort_api->AllocatorFree(allocator, to_free);
+}
+
+OrtStatus *SessionGetInputTypeInfo(OrtSession *session, size_t i,
+  OrtTypeInfo **out) {
+  return ort_api->SessionGetInputTypeInfo(session, i, out);
+}
+
+OrtStatus *SessionGetOutputTypeInfo(OrtSession *session, size_t i,
+  OrtTypeInfo **out) {
+  return ort_api->SessionGetOutputTypeInfo(session, i, out);
+}
+
+void ReleaseTypeInfo(OrtTypeInfo *o) {
+  ort_api->ReleaseTypeInfo(o);
+}
+
+OrtStatus *CastTypeInfoToTensorInfo(OrtTypeInfo *type_info,
+  OrtTensorTypeAndShapeInfo **out) {
+  return ort_api->CastTypeInfoToTensorInfo(type_info,
+    (const OrtTensorTypeAndShapeInfo **) out);
 }
