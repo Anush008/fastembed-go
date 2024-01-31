@@ -74,6 +74,12 @@ OrtStatus *SetIntraOpNumThreads(OrtSessionOptions *o, int n);
 // Wraps ort_api->SetInterOpNumThreads
 OrtStatus *SetInterOpNumThreads(OrtSessionOptions *o, int n);
 
+// Wraps ort_api->EnableCpuMemArena & ort_api->DisableCpuMemArena
+OrtStatus *SetCpuMemArena(OrtSessionOptions *o, int use_arena);
+
+// Wraps ort_api->EnableMemPattern & ort_api->DisableMemPattern
+OrtStatus *SetMemPattern(OrtSessionOptions *o, int use_mem_pattern);
+
 // Wraps ort_api->SessionOptionsAppendExecutionProvider_CUDA_V2
 OrtStatus *AppendExecutionProviderCUDAV2(OrtSessionOptions *o,
   OrtCUDAProviderOptionsV2 *cuda_options);
@@ -107,6 +113,11 @@ OrtStatus *AppendExecutionProviderTensorRTV2(OrtSessionOptions *o,
 OrtStatus *AppendExecutionProviderCoreML(OrtSessionOptions *o,
   uint32_t flags);
 
+// Wraps getting the OrtDmlApi struct and calling
+// dml_api->SessionOptionsAppendExecutionProvider_DML.
+OrtStatus *AppendExecutionProviderDirectML(OrtSessionOptions *o,
+  int device_id);
+
 // Creates an ORT session using the given model. The given options pointer may
 // be NULL; if it is, then we'll use default options.
 OrtStatus *CreateSession(void *model_data, size_t model_data_length,
@@ -121,6 +132,12 @@ OrtStatus *RunOrtSession(OrtSession *session,
 // Wraps ort_api->ReleaseSession
 void ReleaseOrtSession(OrtSession *session);
 
+// Wraps ort_api->SessionGetInputCount.
+OrtStatus *SessionGetInputCount(OrtSession *session, size_t *result);
+
+// Wraps ort_api->SessionGetOutputCount.
+OrtStatus *SessionGetOutputCount(OrtSession *session, size_t *result);
+
 // Used to free OrtValue instances, such as tensors.
 void ReleaseOrtValue(OrtValue *value);
 
@@ -129,6 +146,52 @@ void ReleaseOrtValue(OrtValue *value);
 OrtStatus *CreateOrtTensorWithShape(void *data, size_t data_size,
   int64_t *shape, int64_t shape_size, OrtMemoryInfo *mem_info,
   ONNXTensorElementDataType dtype, OrtValue **out);
+
+// Wraps ort_api->GetTensorTypeAndShape
+OrtStatus *GetTensorTypeAndShape(const OrtValue *value, OrtTensorTypeAndShapeInfo **out);
+
+// Wraps ort_api->GetDimensionsCount
+OrtStatus *GetDimensionsCount(const OrtTensorTypeAndShapeInfo *info, size_t *out);
+
+// Wraps ort_api->GetDimensions
+OrtStatus *GetDimensions(const OrtTensorTypeAndShapeInfo *info, int64_t *dim_values, size_t dim_values_length);
+
+// Wraps ort_api->GetTensorElementType
+OrtStatus *GetTensorElementType(const OrtTensorTypeAndShapeInfo *info, enum ONNXTensorElementDataType *out);
+
+// Wraps ort_api->ReleaseTensorTypeAndShapeInfo
+void ReleaseTensorTypeAndShapeInfo(OrtTensorTypeAndShapeInfo *input);
+
+// Wraps ort_api->GetTensorMutableData
+OrtStatus *GetTensorMutableData(OrtValue *value, void **out);
+
+// Wraps ort_api->SessionGetInputName, using the default allocator.
+OrtStatus *SessionGetInputName(OrtSession *session, size_t i, char **name);
+
+// Wraps ort_api->SessionGetOutputName, using the default allocator.
+OrtStatus *SessionGetOutputName(OrtSession *session, size_t i, char **name);
+
+// Frees anything that was allocated using the default ORT allocator.
+OrtStatus *FreeWithDefaultORTAllocator(void *to_free);
+
+// Wraps ort_api->SessionGetInputTypeInfo.
+OrtStatus *SessionGetInputTypeInfo(OrtSession *session, size_t i,
+  OrtTypeInfo **out);
+
+// Wraps ort_api->SessionGetOutputTypeInfo.
+OrtStatus *SessionGetOutputTypeInfo(OrtSession *session, size_t i,
+  OrtTypeInfo **out);
+
+// If the type_info is for a tensor, sets out to the a pointer to the tensor's
+// NameAndTypeInfo. Do _not_ free the out pointer; it will be freed when
+// type_info is released.
+//
+// Wraps ort_api->CastTypeInfoToTensorInfo.
+OrtStatus *CastTypeInfoToTensorInfo(OrtTypeInfo *type_info,
+  OrtTensorTypeAndShapeInfo **out);
+
+// Wraps ort_api->FreeTypeInfo.
+void ReleaseTypeInfo(OrtTypeInfo *o);
 
 #ifdef __cplusplus
 }  // extern "C"

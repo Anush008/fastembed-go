@@ -8,17 +8,16 @@ github.com/emirpasic/gods/trees/binaryheap
 github.com/emirpasic/gods/utils
 # github.com/mattn/go-runewidth v0.0.15
 ## explicit; go 1.9
-github.com/mattn/go-runewidth
 # github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 ## explicit
 github.com/mitchellh/colorstring
-# github.com/rivo/uniseg v0.4.4
+# github.com/rivo/uniseg v0.4.6
 ## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/schollz/progressbar/v2 v2.15.0
 ## explicit; go 1.13
 github.com/schollz/progressbar/v2
-# github.com/schollz/progressbar/v3 v3.13.1
+# github.com/schollz/progressbar/v3 v3.14.1
 ## explicit; go 1.13
 github.com/schollz/progressbar/v3
 # github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c
@@ -39,18 +38,18 @@ github.com/sugarme/tokenizer/processor
 github.com/sugarme/tokenizer/spm
 github.com/sugarme/tokenizer/util
 github.com/sugarme/tokenizer/util/slice
-# github.com/yalue/onnxruntime_go v1.3.0
+# github.com/yalue/onnxruntime_go v1.7.0
 ## explicit; go 1.19
 github.com/yalue/onnxruntime_go
-# golang.org/x/sys v0.13.0
-## explicit; go 1.17
+# golang.org/x/sys v0.16.0
+## explicit; go 1.18
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.13.0
-## explicit; go 1.17
+# golang.org/x/term v0.16.0
+## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.13.0
-## explicit; go 1.17
+# golang.org/x/text v0.14.0
+## explicit; go 1.18
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
