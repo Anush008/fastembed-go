@@ -365,7 +365,7 @@ func loadTokenizer(modelPath string, maxLength int) (*tokenizer.Tokenizer, error
 		Stride:    0,
 	})
 
-	paddingStrategy := tokenizer.NewPaddingStrategy(tokenizer.WithFixed(maxLength))
+	paddingStrategy := tokenizer.NewPaddingStrategy(tokenizer.WithBatchLongest())
 
 	paddingParams := tokenizer.PaddingParams{
 		Strategy:  *paddingStrategy,
