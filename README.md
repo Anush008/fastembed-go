@@ -37,7 +37,7 @@ The default embedding supports "query" and "passage" prefixes for the input text
 Run the following Go CLI command in your project directory:
 
 ```bash
-go get -u github.com/Anush008/fastembed-go
+go get -u github.com/anush008/fastembed-go
 ```
 
 ## 📖 Usage
