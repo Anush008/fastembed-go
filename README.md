@@ -40,6 +40,23 @@ Run the following Go CLI command in your project directory:
 go get -u github.com/anush008/fastembed-go
 ```
 
+## ℹ︎ Notice:
+
+The Onnx runtime path is automatically loaded on most environments. However, if you encounter
+```sh
+panic: Platform-specific initialization failed: Error loading ONNX shared library
+```
+Set the `ONNX_PATH` env to your Onnx installation.
+For eg, on MacOS:
+```sh
+export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.dylib"
+```
+On Linux:
+```sh
+export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.so"
+```
+You can find the Onnx runtime releases [here](https://github.com/microsoft/onnxruntime/releases).
+
 ## 📖 Usage
 
 ```go
@@ -106,23 +123,6 @@ if err != nil {
  panic(err)
 }
 ```
-
-## ℹ︎ Notice:
-
-The Onnx runtime path is automatically loaded on most environments. However, if you encounter
-```sh
-panic: Platform-specific initialization failed: Error loading ONNX shared library
-```
-Set the `ONNX_PATH` env to your Onnx installation.
-For eg, on MacOS:
-```sh
-export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.dylib"
-```
-On Linux:
-```sh
-export ONNX_PATH="/path/to/onnx/lib/libonnxruntime.so"
-```
-You can find the Onnx runtime releases [here](https://github.com/microsoft/onnxruntime/releases).
 
 ## 🚒 Under the hood
 
